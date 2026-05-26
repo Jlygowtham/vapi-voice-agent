@@ -1,80 +1,59 @@
-# TechLearn Academy: Vapi Voice Agent Sandbox
+# TechLearn Academy — Monica, AI Voice Enrollment Agent
 
-This is a premium Next.js testbed and dashboard built to display, test, and audit the **Monica** (Vapi Voice Assistant) registration flow. It provides a web-based testing client, a Twilio phone dialer, and an automated registration logging mechanism using Vercel KV.
-
----
-
-## 🌟 Key Features
-
-*   **In-Browser Call SDK**: Connect directly to Monica in your browser with real-time volume indicators, active audio rings, and a live scrollable transcript feed.
-*   **Secure Twilio Outbound Dialer**: Enter your phone number and trigger a direct phone call from your Twilio number via the serverless backend.
-*   **Vapi Webhook Endpoint (`/api/webhook`)**: Receives the `register_class` tool callback from Vapi, stores registrations, and returns the formatted response to allow Monica to confirm the enrollment.
-*   **Live Registration Logger**: Built using **Vercel KV (Redis)**. Any successful registration made on the web or via Twilio phone line instantly logs here.
-*   **Local Fallback**: Automatically falls back to an in-memory database during local testing if Vercel KV is not configured.
+Monica is a conversational AI voice agent built on the **Vapi platform**. She helps students register for technical courses through a fully natural voice conversation — no forms, no clicks, just talking.
 
 ---
 
-## ⚙️ Environment Variables
+## 🎙️ What is Monica?
 
-Copy `.env.example` to `.env.local` and configure:
+Monica is a real-time voice assistant embedded in the TechLearn Academy enrollment dashboard. Students can speak to her directly in the browser or receive a phone call and complete their entire course registration by simply having a conversation.
 
-```bash
-# Vapi credentials from Vapi dashboard
-NEXT_PUBLIC_VAPI_PUBLIC_KEY="your_vapi_public_key"
-NEXT_PUBLIC_VAPI_ASSISTANT_ID="6cee1a72-ba5c-4239-a8d4-a0cd30b2b547"
-VAPI_PRIVATE_KEY="your_vapi_private_key"
-VAPI_PHONE_NUMBER_ID="your_twilio_number_id_in_vapi"
-
-# Vercel KV credentials (auto-injected in production, optional locally)
-KV_URL=""
-KV_REST_API_URL=""
-KV_REST_API_TOKEN=""
-KV_REST_API_READ_ONLY_TOKEN=""
-```
+She is powered by **Vapi's advanced voice AI** with real-time speech-to-text, natural language understanding, and text-to-speech — making her sound and feel like a real human enrollment advisor.
 
 ---
 
-## 🚀 Local Development
+## ✨ What Monica Can Do
 
-1. Install dependencies:
-    ```bash
-    npm install
-    ```
-2. Start the development server:
-    ```bash
-    npm run dev
-    ```
-3. Open [http://localhost:3000](http://localhost:3000) to test locally.
+### 🗣️ Natural Voice Enrollment
+Monica guides students through the full enrollment process using conversation. She asks for:
+- Their **name**, **email**, and **phone number**
+- Their preferred **course** (Python Programming, Generative AI, Agentic AI, Cloud Computing)
+- Their preferred **timeslot** (10 AM, 2 PM, or 6 PM)
+
+Once collected, she confirms the details and logs the registration instantly.
+
+### 📱 Works Two Ways
+
+**Talk in the Browser** — Click the microphone sphere on the dashboard. Monica connects live in your browser using the Vapi Web SDK. You can see a real-time scrollable transcript of the entire conversation as it happens.
+
+**Receive a Phone Call** — Enter your phone number and click *"Call Me"*. Monica will call you on your actual phone via Twilio. You complete the enrollment over the phone — same natural conversation, same database logging.
+
+### 📊 Live Enrollment Database
+Every registration Monica completes is saved to a live database and displayed in the **Enrollment Log** panel. Records update automatically — no page refresh needed. Each entry shows:
+- Student name, email, phone
+- Course selected and timeslot booked
+- Whether it was a web or phone call
+- Exact time of enrollment
+
+### 📂 Course Catalog
+Monica knows the following available courses and timeslots:
+
+| Course | Available Slots |
+|---|---|
+| Python Programming | 10 AM · 2 PM · 6 PM |
+| Generative AI | 10 AM · 2 PM · 6 PM |
+| Agentic AI | 10 AM · 2 PM · 6 PM |
+| Cloud Computing | 10 AM · 2 PM · 6 PM |
 
 ---
 
-## ☁️ Vercel Deployment
+## 🛠️ Tech Behind Monica
 
-Deploying the app is extremely straightforward:
-
-1.  **Create a New Vercel Project**: Push this codebase to GitHub and link it in Vercel.
-2.  **Add Environment Variables**: Paste your Vapi variables (`NEXT_PUBLIC_VAPI_PUBLIC_KEY`, `NEXT_PUBLIC_VAPI_ASSISTANT_ID`, `VAPI_PRIVATE_KEY`, `VAPI_PHONE_NUMBER_ID`) in Vercel.
-3.  **Add Vercel KV Storage (1-Click)**:
-    *   On the Vercel project dashboard, go to the **Storage** tab.
-    *   Select **KV (Redis)** and click **Create**.
-    *   Connect it to your project. Vercel will automatically inject the `KV_*` environment variables!
-4.  **Connect Webhook in Vapi**:
-    *   Once Vercel deploys, copy your production domain (e.g. `https://your-domain.vercel.app`).
-    *   In the Vapi Dashboard, open your assistant configuration or the **`register_class` Tool** configuration.
-    *   Set the **Server URL** to: `https://your-domain.vercel.app/api/webhook`.
-
----
-
-## 🎙️ How to Test (For Interviewers)
-
-1.  **Web Call Testing**:
-    *   Click the **Microphone icon** on the dashboard.
-    *   Grant microphone access. Once connected, greet Monica.
-    *   Register for one of the classes (e.g., **Python Programming** at **10 AM**).
-    *   Provide your details (name, email, and phone) when prompted.
-    *   Once Monica completes the registration and says "You're all set", check the table at the bottom of the dashboard. Your registration details will instantly appear!
-2.  **Phone Call Testing**:
-    *   Input your phone number in the **"Receive a Phone Call"** widget.
-    *   Click **Call Me**.
-    *   Answer the call, talk to Monica, and complete the enrollment.
-    *   Verify that your registration shows up in the database table with the channel labeled **"Phone line"**.
+| Layer | Technology |
+|---|---|
+| Voice AI | [Vapi](https://vapi.ai) — real-time voice assistant platform |
+| Frontend | Next.js 16 with Vanilla CSS Modules |
+| Phone Calls | Twilio via Vapi outbound dialer |
+| Database | Vercel KV (Redis) — serverless, globally replicated |
+| Hosting | Vercel (Edge + Serverless Functions) |
+| Webhooks | Next.js API Routes — triggered during calls by Vapi |

@@ -1,0 +1,960 @@
+.container {
+  min-height: 100vh;
+  background-color: #030014; /* Deep premium space black */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0px, transparent 40%);
+  color: #f3f4f6;
+  padding: 2.5rem 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: hidden;
+  position: relative;
+}
+
+.wrapper {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 5rem);
+  gap: 2rem;
+  min-height: 0;
+}
+
+/* Floating Navbar Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 1.5rem;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.brandInfo h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.03em;
+}
+
+.brandInfo p {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  backdrop-filter: blur(12px);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 10px #10b981;
+}
+
+.statusDotActive {
+  background-color: #6366f1;
+  box-shadow: 0 0 10px #6366f1;
+  animation: pulse 2s infinite;
+}
+
+.drawerTriggerBtn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 0.5rem 1.15rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(12px);
+}
+
+.drawerTriggerBtn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Main Focus Workspace Area */
+.workspace {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+}
+
+/* Idle Screen Configuration */
+.idleWorkspace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  animation: fadeIn 0.6s ease-out;
+}
+
+.welcomeBlock {
+  margin-bottom: 2rem;
+}
+
+.welcomeBlock h2 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #818cf8;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 0.75rem;
+}
+
+.welcomeBlock h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.04em;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+  background: linear-gradient(to right, #ffffff 30%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcomeBlock p {
+  font-size: 1.1rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.focusSphereContainer {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.focusRings {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px dashed rgba(99, 102, 241, 0.15);
+  animation: orbPulse 4s infinite ease-in-out;
+}
+
+.focusRingsTwo {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  border: 1px solid rgba(168, 85, 247, 0.08);
+  animation: orbPulse 4s infinite ease-in-out reverse;
+  animation-delay: 1s;
+}
+
+.focusSphereButton {
+  z-index: 10;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(79, 70, 229, 0.2) 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 15px 45px rgba(99, 102, 241, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
+}
+
+.focusSphereButton:hover {
+  transform: scale(1.06);
+  border-color: rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.55) 0%, rgba(79, 70, 229, 0.3) 100%);
+  box-shadow: 
+    0 20px 60px rgba(99, 102, 241, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.focusSphereButton svg {
+  color: #a5b4fc;
+  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+  transition: transform 0.3s ease;
+}
+
+.focusSphereButton:hover svg {
+  transform: scale(1.1);
+}
+
+.sphereStatusPrompt {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #818cf8;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.sphereLastCall {
+  font-size: 0.8rem;
+  color: #4b5563;
+  margin-top: 1.5rem;
+}
+
+/* Dialer form directly below the voice agent sphere */
+.mainDialerArea {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mainDialerDivider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.mainDialerDivider::before,
+.mainDialerDivider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mainDialerDivider:not(:empty)::before {
+  margin-right: .85em;
+}
+
+.mainDialerDivider:not(:empty)::after {
+  margin-left: .85em;
+}
+
+.mainDialerForm {
+  width: 100%;
+}
+
+.mainDialerInputWrapper {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mainDialerInput {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.95rem 1.35rem;
+  border-radius: 16px;
+  color: white;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.mainDialerInput:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(99, 102, 241, 0.02);
+  box-shadow: 
+    0 0 15px rgba(99, 102, 241, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.mainDialerInput::placeholder {
+  color: #4b5563;
+}
+
+.mainDialerBtn {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  border: none;
+  padding: 0.95rem 1.75rem;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+  flex-shrink: 0;
+}
+
+.mainDialerBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 25px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+}
+
+.mainDialerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Active Call Workspace configuration */
+.activeWorkspace {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  gap: 2.5rem;
+  animation: fadeIn 0.5s ease-out;
+  min-height: 0;
+}
+
+@media (min-width: 900px) {
+  .activeWorkspace {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+  }
+}
+
+/* Active Visualizer Panel (Left Column) */
+.activeVisualizerPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  background: rgba(10, 10, 20, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 28px;
+  padding: 3rem 2rem;
+  flex-shrink: 0;
+  backdrop-filter: blur(16px);
+}
+
+@media (min-width: 900px) {
+  .activeVisualizerPanel {
+    width: 350px;
+  }
+}
+
+.activeSphereArea {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activeAudioRings {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(99, 102, 241, 0.15);
+  transition: transform 0.1s ease;
+}
+
+.activeAudioRingsSecondary {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid rgba(168, 85, 247, 0.08);
+  transition: transform 0.1s ease;
+}
+
+.activeSphereButton {
+  z-index: 10;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.8) 0%, rgba(220, 38, 38, 0.8) 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 10px 30px rgba(239, 68, 68, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: activeCallPulse 2.5s infinite;
+}
+
+.activeSphereButton:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
+  box-shadow: 0 15px 35px rgba(239, 68, 68, 0.5);
+}
+
+.activeCallMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.activeCallStatus {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #34d399;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.callSpeakingColor {
+  color: #818cf8;
+}
+
+.activeDurationBadge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.visualizerWave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 50px;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.waveBar {
+  width: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(to top, #6366f1, #c084fc);
+  transition: height 0.1s ease;
+  animation: waveGlow 2s infinite alternate;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+
+/* Active Subtitle Panel (Right Column) */
+.activeSubtitlePanel {
+  flex-grow: 1;
+  background: rgba(10, 10, 20, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 28px;
+  padding: 2.5rem;
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 0;
+  height: 100%;
+}
+
+.subtitleTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #818cf8;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 1rem;
+}
+
+.subtitleScrollBox {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding-right: 1rem;
+  /* Scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.2) transparent;
+}
+
+.subtitleScrollBox::-webkit-scrollbar {
+  width: 4px;
+}
+
+.subtitleScrollBox::-webkit-scrollbar-thumb {
+  background-color: rgba(99, 102, 241, 0.2);
+  border-radius: 9999px;
+}
+
+.subtitleEmpty {
+  color: #4b5563;
+  font-size: 1.2rem;
+  text-align: center;
+  margin: auto;
+  font-style: italic;
+}
+
+.subAgent, .subUser {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  animation: slideUp 0.3s ease-out;
+}
+
+.subAgent {
+  align-items: flex-start;
+}
+
+.subUser {
+  align-items: flex-end;
+}
+
+.subRoleAgent, .subRoleUser {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.subRoleAgent {
+  color: #a5b4fc;
+}
+
+.subRoleUser {
+  color: #94a3b8;
+}
+
+.subText {
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.4;
+  max-width: 85%;
+  word-wrap: break-word;
+}
+
+.subAgent .subText {
+  color: #f1f5f9;
+  text-align: left;
+}
+
+.subUser .subText {
+  color: #a5b4fc;
+  text-align: right;
+}
+
+/* Dimmer Overlay Backdrop */
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.backdropActive {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Slide-Up Bottom Drawer Sheet */
+.bottomDrawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80vh;
+  background: rgba(8, 8, 16, 0.94);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-left-radius: 36px;
+  border-top-right-radius: 36px;
+  transform: translateY(100%);
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 2.5rem 3rem 2.5rem;
+}
+
+.bottomDrawerOpen {
+  transform: translateY(0);
+}
+
+.drawerHandle {
+  width: 48px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  margin: 0 auto 1.5rem auto;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+}
+
+.drawerHandle:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.drawerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-shrink: 0;
+}
+
+.drawerHeaderTitle {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+}
+
+.drawerHeaderTitle svg {
+  color: #818cf8;
+}
+
+.drawerCloseBtn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.drawerCloseBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+.drawerContentGrid {
+  flex-grow: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+@media (min-width: 950px) {
+  .drawerContentGrid {
+    grid-template-columns: 1fr 1.3fr;
+  }
+}
+
+.drawerLeftPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+
+.drawerRightPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drawerSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawerSectionTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.drawerSectionDesc {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+/* Class Catalog Grid styling inside Drawer */
+.drawerClassGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.drawerClassCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 1.15rem;
+  transition: all 0.3s ease;
+}
+
+.drawerClassCard:hover {
+  background: rgba(99, 102, 241, 0.03);
+  border-color: rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+}
+
+.drawerClassName {
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+
+.drawerClassSlots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.drawerClassSlots span {
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+}
+
+/* Database Table styling inside Drawer */
+.drawerTableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.drawerClearBtn {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 0.4rem 1rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.drawerClearBtn:hover {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: #ef4444;
+}
+
+.drawerTableContainer {
+  flex-grow: 1;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  min-height: 250px;
+  max-height: 480px;
+}
+
+.drawerTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.drawerTable th {
+  background: rgba(255, 255, 255, 0.015);
+  padding: 1rem 1.25rem;
+  font-weight: 700;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.drawerTable td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: #cbd5e1;
+}
+
+.drawerTable tr:hover td {
+  background: rgba(255, 255, 255, 0.01);
+  color: #fff;
+}
+
+.sourceBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.sourceBadgeWeb {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+}
+
+.sourceBadgePhone {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.drawerEmptyState {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #4b5563;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Animations */
+@keyframes orbPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 70px rgba(168, 85, 247, 0.4);
+    border-color: rgba(168, 85, 247, 0.3);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.1);
+  }
+}
+
+@keyframes activeCallPulse {
+  0% {
+    transform: scale(0.96);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  70% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.96);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes waveGlow {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(99, 102, 241, 0.4));
+  }
+  100% {
+    filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.8));
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

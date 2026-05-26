@@ -1,14 +1,14 @@
 # TechLearn Academy: Vapi Voice Agent Sandbox
 
-This is a premium Next.js testbed and dashboard built to display, test, and audit the **Swetha** (Vapi Voice Assistant) registration flow. It provides a web-based testing client, a Twilio phone dialer, and an automated registration logging mechanism using Vercel KV.
+This is a premium Next.js testbed and dashboard built to display, test, and audit the **Monica** (Vapi Voice Assistant) registration flow. It provides a web-based testing client, a Twilio phone dialer, and an automated registration logging mechanism using Vercel KV.
 
 ---
 
 ## 🌟 Key Features
 
-*   **In-Browser Call SDK**: Connect directly to Swetha in your browser with real-time volume indicators, active audio rings, and a live scrollable transcript feed.
+*   **In-Browser Call SDK**: Connect directly to Monica in your browser with real-time volume indicators, active audio rings, and a live scrollable transcript feed.
 *   **Secure Twilio Outbound Dialer**: Enter your phone number and trigger a direct phone call from your Twilio number via the serverless backend.
-*   **Vapi Webhook Endpoint (`/api/webhook`)**: Receives the `register_class` tool callback from Vapi, stores registrations, and returns the formatted response to allow Swetha to confirm the enrollment.
+*   **Vapi Webhook Endpoint (`/api/webhook`)**: Receives the `register_class` tool callback from Vapi, stores registrations, and returns the formatted response to allow Monica to confirm the enrollment.
 *   **Live Registration Logger**: Built using **Vercel KV (Redis)**. Any successful registration made on the web or via Twilio phone line instantly logs here.
 *   **Local Fallback**: Automatically falls back to an in-memory database during local testing if Vercel KV is not configured.
 
@@ -69,12 +69,12 @@ Deploying the app is extremely straightforward:
 
 1.  **Web Call Testing**:
     *   Click the **Microphone icon** on the dashboard.
-    *   Grant microphone access. Once connected, greet Swetha.
+    *   Grant microphone access. Once connected, greet Monica.
     *   Register for one of the classes (e.g., **Python Programming** at **10 AM**).
     *   Provide your details (name, email, and phone) when prompted.
-    *   Once Swetha completes the registration and says "You're all set", check the table at the bottom of the dashboard. Your registration details will instantly appear!
+    *   Once Monica completes the registration and says "You're all set", check the table at the bottom of the dashboard. Your registration details will instantly appear!
 2.  **Phone Call Testing**:
     *   Input your phone number in the **"Receive a Phone Call"** widget.
     *   Click **Call Me**.
-    *   Answer the call, talk to Swetha, and complete the enrollment.
+    *   Answer the call, talk to Monica, and complete the enrollment.
     *   Verify that your registration shows up in the database table with the channel labeled **"Phone line"**.

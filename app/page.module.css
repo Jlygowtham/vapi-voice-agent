@@ -958,3 +958,260 @@
     transform: rotate(360deg);
   }
 }
+
+/* ================================================
+   RESPONSIVE MEDIA QUERIES — Mobile First
+   ================================================ */
+
+/* Tablet & smaller desktop (max 900px) */
+@media (max-width: 900px) {
+  .container {
+    padding: 1.5rem 1.25rem;
+    overflow-y: auto;
+  }
+
+  .wrapper {
+    height: auto;
+    min-height: calc(100vh - 3rem);
+    gap: 1.5rem;
+  }
+
+  .brandInfo h1 {
+    font-size: 1.35rem;
+  }
+
+  .welcomeBlock h1 {
+    font-size: 2.75rem;
+  }
+
+  .welcomeBlock p {
+    font-size: 1rem;
+  }
+
+  .activeWorkspace {
+    flex-direction: column;
+    height: auto;
+    gap: 1.5rem;
+  }
+
+  .activeVisualizerPanel {
+    width: 100%;
+    padding: 2rem 1.5rem;
+  }
+
+  .activeSubtitlePanel {
+    height: 380px;
+    padding: 1.75rem;
+  }
+
+  .subText {
+    font-size: 1.2rem;
+  }
+
+  .bottomDrawer {
+    height: 88vh;
+    padding: 1.5rem 1.5rem 2.5rem 1.5rem;
+  }
+}
+
+/* Mobile phones (max 640px) */
+@media (max-width: 640px) {
+  .container {
+    padding: 1.25rem 1rem;
+    overflow-y: auto;
+    align-items: flex-start;
+  }
+
+  .wrapper {
+    height: auto;
+    min-height: calc(100dvh - 2.5rem);
+    gap: 1.25rem;
+  }
+
+  /* Header — stack on tiny screens */
+  .header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+  }
+
+  .brandInfo h1 {
+    font-size: 1.2rem;
+  }
+
+  .brandInfo p {
+    font-size: 0.75rem;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .statusIndicator {
+    font-size: 0.72rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .drawerTriggerBtn {
+    font-size: 0.72rem;
+    padding: 0.4rem 0.85rem;
+  }
+
+  /* Idle workspace on mobile */
+  .idleWorkspace {
+    max-width: 100%;
+    gap: 0;
+  }
+
+  .welcomeBlock {
+    margin-bottom: 1.5rem;
+  }
+
+  .welcomeBlock h2 {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+  }
+
+  .welcomeBlock h1 {
+    font-size: 2.1rem;
+    letter-spacing: -0.03em;
+  }
+
+  .welcomeBlock p {
+    font-size: 0.9rem;
+  }
+
+  /* Make the sphere slightly smaller on mobile */
+  .focusSphereContainer {
+    width: 170px;
+    height: 170px;
+  }
+
+  .focusSphereButton {
+    width: 100px;
+    height: 100px;
+  }
+
+  .sphereStatusPrompt {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* Dialer — stack button below input on mobile */
+  .mainDialerArea {
+    max-width: 100%;
+  }
+
+  .mainDialerInputWrapper {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .mainDialerInput {
+    width: 100%;
+    font-size: 1rem;
+    padding: 0.9rem 1rem;
+  }
+
+  .mainDialerBtn {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  /* Active call on mobile */
+  .activeWorkspace {
+    flex-direction: column;
+    gap: 1rem;
+    height: auto;
+  }
+
+  .activeVisualizerPanel {
+    width: 100%;
+    padding: 1.5rem 1.25rem;
+    border-radius: 20px;
+  }
+
+  .activeSphereArea {
+    width: 130px;
+    height: 130px;
+  }
+
+  .activeSphereButton {
+    width: 76px;
+    height: 76px;
+  }
+
+  .activeSubtitlePanel {
+    height: 300px;
+    padding: 1.25rem;
+    border-radius: 20px;
+    gap: 1rem;
+  }
+
+  .subText {
+    font-size: 1rem;
+    max-width: 95%;
+  }
+
+  /* Bottom drawer on mobile */
+  .bottomDrawer {
+    height: 92vh;
+    padding: 1.25rem 1rem 2rem 1rem;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+  }
+
+  .drawerHeaderTitle {
+    font-size: 1.05rem;
+  }
+
+  .drawerContentGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .drawerClassGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .drawerSectionTitle {
+    font-size: 1rem;
+  }
+
+  .drawerTable {
+    font-size: 0.75rem;
+  }
+
+  .drawerTable th,
+  .drawerTable td {
+    padding: 0.7rem 0.75rem;
+  }
+}
+
+/* Very small phones (max 380px) */
+@media (max-width: 380px) {
+  .welcomeBlock h1 {
+    font-size: 1.75rem;
+  }
+
+  .focusSphereContainer {
+    width: 150px;
+    height: 150px;
+  }
+
+  .focusSphereButton {
+    width: 90px;
+    height: 90px;
+  }
+
+  .drawerClassGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .brandInfo h1 {
+    font-size: 1.05rem;
+  }
+}

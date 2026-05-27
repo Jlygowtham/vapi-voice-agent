@@ -168,15 +168,21 @@ export default function Home() {
       });
 
       vapiInstance.on('speech-start', () => {
-        setCallStatus('speaking');
+        // Guard: don't overwrite 'ended' status if call-end already fired
+        setCallStatus((prev) => prev === 'ended' ? 'ended' : 'speaking');
       });
 
       vapiInstance.on('speech-end', () => {
-        setCallStatus('listening');
+        // Guard: don't overwrite 'ended' status if call-end already fired
+        setCallStatus((prev) => prev === 'ended' ? 'ended' : 'listening');
       });
 
       vapiInstance.on('volume-level', (level) => {
-        setVolume(level);
+        // Guard: don't update volume after call ends
+        setCallStatus((prev) => {
+          if (prev !== 'ended') setVolume(level);
+          return prev;
+        });
       });
 
       vapiInstance.on('message', (message) => {
@@ -226,7 +232,37 @@ export default function Home() {
     if (!vapiRef.current) return;
 
     if (isCallActive && callStatus !== 'ended') {
-      vapiRef.current.stop();
+      // ── ENDING CALL ──────────────────────────────────────────────────────────
+      // Immediately update UI so the button feels responsive.
+      // Don't wait for the call-end event — it can arrive late or not at all.
+      setCallStatus('ended');
+      setIsCallActive(true);
+      setVolume(0);
+      setPartialTranscript(null);
+
+      // Stop the timer right now
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setLastCallTime(
+        new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      );
+
+      // Save the transcript immediately (don't rely on call-end firing)
+      const finalTranscripts = transcriptsRef.current;
+      const duration = durationRef.current;
+      const callId = callIdRef.current || 'local-' + Math.random().toString(36).substring(7);
+      if (saveConversationLogRef.current) {
+        saveConversationLogRef.current(callId, finalTranscripts, duration);
+      }
+
+      // Tell Vapi to actually stop the connection (in background)
+      try {
+        vapiRef.current.stop();
+      } catch (e) {
+        console.error('Error stopping Vapi:', e);
+      }
     } else {
       setTranscripts([]);
       setPartialTranscript(null);

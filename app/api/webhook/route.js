@@ -28,6 +28,7 @@ export async function POST(request) {
         if (functionName === 'register_class') {
           const registration = {
             id: toolCall.id || Math.random().toString(36).substring(7),
+            callId: body.message?.call?.id || 'unknown',
             name: args.name || 'Unknown',
             email: args.email || 'Unknown',
             phone: args.phone || 'Unknown',
@@ -82,6 +83,101 @@ export async function POST(request) {
       }
 
       return NextResponse.json({ results });
+    }
+
+    // Handle end-of-call report (captures transcripts, summary, and duration)
+    if (message.type === 'end-of-call-report') {
+      const callId = message.call?.id;
+      const transcript = message.transcript || '';
+      const summary = message.summary || '';
+      const duration = message.call?.duration || 0;
+      const source = message.call?.type || 'webCall';
+
+      console.log(`Processing End of Call Report for call ${callId}`);
+
+      const isKvConfigured = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
+
+      if (isKvConfigured) {
+        try {
+          const rawList = await kv.lrange('vapi_registrations', 0, -1);
+          let updated = false;
+
+          const registrations = rawList.map(item => {
+            const reg = typeof item === 'string' ? JSON.parse(item) : item;
+            if (reg.callId === callId && callId) {
+              reg.transcript = transcript;
+              reg.summary = summary;
+              reg.duration = duration;
+              updated = true;
+            }
+            return reg;
+          });
+
+          if (updated) {
+            await kv.del('vapi_registrations');
+            for (const reg of registrations.reverse()) {
+              await kv.lpush('vapi_registrations', JSON.stringify(reg));
+            }
+            console.log('Successfully updated registration with webhook transcript');
+          } else {
+            // Create a new log for chat only
+            const newLog = {
+              id: Math.random().toString(36).substring(7),
+              callId,
+              name: 'Monica & Guest',
+              email: '-',
+              phone: '-',
+              class_name: 'Chat Only',
+              timeslot: '-',
+              transcript,
+              summary,
+              duration,
+              createdAt: new Date().toISOString(),
+              source
+            };
+            await kv.lpush('vapi_registrations', JSON.stringify(newLog));
+            await kv.ltrim('vapi_registrations', 0, 99);
+            console.log('Successfully saved webhook chat log');
+          }
+        } catch (kvError) {
+          console.error('Failed to update Vercel KV on webhook report:', kvError);
+        }
+      } else {
+        let updated = false;
+        global.localRegistrations = (global.localRegistrations || []).map(reg => {
+          if (reg.callId === callId && callId) {
+            reg.transcript = transcript;
+            reg.summary = summary;
+            reg.duration = duration;
+            updated = true;
+          }
+          return reg;
+        });
+
+        if (!updated) {
+          const newLog = {
+            id: Math.random().toString(36).substring(7),
+            callId,
+            name: 'Monica & Guest',
+            email: '-',
+            phone: '-',
+            class_name: 'Chat Only',
+            timeslot: '-',
+            transcript,
+            summary,
+            duration,
+            createdAt: new Date().toISOString(),
+            source
+          };
+          global.localRegistrations.unshift(newLog);
+          if (global.localRegistrations.length > 100) {
+            global.localRegistrations = global.localRegistrations.slice(0, 100);
+          }
+        }
+        console.log('Successfully updated local memory chat log');
+      }
+
+      return NextResponse.json({ success: true });
     }
 
     // Default response for other hook messages

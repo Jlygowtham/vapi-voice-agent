@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -9,6 +9,8 @@ export default function Home() {
   const [callStatus, setCallStatus] = useState('idle'); // 'idle' | 'connecting' | 'active' | 'speaking' | 'listening'
   const [volume, setVolume] = useState(0);
   const [transcripts, setTranscripts] = useState([]);
+  // Tracks the live partial (non-final) transcript being streamed right now
+  const [partialTranscript, setPartialTranscript] = useState(null);
   
   // Dialer States
   const [phone, setPhone] = useState('');
@@ -18,6 +20,7 @@ export default function Home() {
   // Database States
   const [registrations, setRegistrations] = useState([]);
   const [isLoadingRegs, setIsLoadingRegs] = useState(true);
+  const [selectedRegForTranscript, setSelectedRegForTranscript] = useState(null);
 
   // Bottom Sheet Drawer State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -27,6 +30,20 @@ export default function Home() {
   const [lastCallTime, setLastCallTime] = useState(null);
   const timerRef = useRef(null);
 
+  // Refs for tracking values inside mounting useEffect closure
+  const transcriptsRef = useRef([]);
+  const durationRef = useRef(0);
+  const callIdRef = useRef(null);
+
+  // Sync refs to state changes
+  useEffect(() => {
+    transcriptsRef.current = transcripts;
+  }, [transcripts]);
+
+  useEffect(() => {
+    durationRef.current = callDuration;
+  }, [callDuration]);
+
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -34,7 +51,7 @@ export default function Home() {
   };
 
   // Fetch registrations from API
-  const fetchRegistrations = async () => {
+  const fetchRegistrations = useCallback(async () => {
     try {
       const res = await fetch('/api/registrations');
       if (res.ok) {
@@ -46,11 +63,58 @@ export default function Home() {
     } finally {
       setIsLoadingRegs(false);
     }
-  };
+  }, []);
+
+  // Poll registrations only when the drawer is open to save CPU/network overhead
+  useEffect(() => {
+    let interval;
+    if (isDrawerOpen) {
+      // Defer state update asynchronously to satisfy React 19/ESLint rules
+      setTimeout(fetchRegistrations, 0); 
+      interval = setInterval(fetchRegistrations, 5000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isDrawerOpen, fetchRegistrations]);
+
+  // Save the conversation transcript to database
+  const saveConversationLog = useCallback(async (callId, finalTranscripts, duration) => {
+    try {
+      const res = await fetch('/api/registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callId,
+          name: 'Monica & Guest',
+          email: '-',
+          phone: '-',
+          class_name: 'Chat Only',
+          timeslot: '-',
+          transcripts: finalTranscripts,
+          duration,
+          createdAt: new Date().toISOString(),
+          source: 'webCall'
+        })
+      });
+      if (res.ok) {
+        fetchRegistrations();
+      }
+    } catch (e) {
+      console.error('Failed to auto-save conversation log:', e);
+    }
+  }, [fetchRegistrations]);
 
   // Vapi Ref
   const vapiRef = useRef(null);
   const transcriptContainerRef = useRef(null);
+  // Stable ref to saveConversationLog — avoids re-creating the Vapi SDK instance
+  const saveConversationLogRef = useRef(null);
+
+  // Keep the ref synced with the latest version of saveConversationLog
+  useEffect(() => {
+    saveConversationLogRef.current = saveConversationLog;
+  }, [saveConversationLog]);
 
   // Load Vapi Web SDK on client side only
   useEffect(() => {
@@ -67,6 +131,7 @@ export default function Home() {
         setIsCallActive(true);
         setCallStatus('active');
         setTranscripts([]);
+        setPartialTranscript(null);
         setCallDuration(0);
         
         // Start duration timer
@@ -79,10 +144,10 @@ export default function Home() {
       });
 
       vapiInstance.on('call-end', () => {
-        setIsCallActive(false);
-        setCallStatus('idle');
+        setIsCallActive(true); // Keep the workspace active so they can read subtitles
+        setCallStatus('ended');
         setVolume(0);
-        setTranscripts([]); // Clear transcripts on end
+        setPartialTranscript(null);
         console.log('Call ended');
 
         // Stop duration timer and record last call time
@@ -92,8 +157,14 @@ export default function Home() {
         }
         setLastCallTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 
-        // Refresh database when call ends to fetch any final registration
-        fetchRegistrations();
+        // POST the conversation log to save transcripts — use ref to avoid stale closure
+        const finalTranscripts = transcriptsRef.current;
+        const duration = durationRef.current;
+        const callId = callIdRef.current || 'local-' + Math.random().toString(36).substring(7);
+
+        if (saveConversationLogRef.current) {
+          saveConversationLogRef.current(callId, finalTranscripts, duration);
+        }
       });
 
       vapiInstance.on('speech-start', () => {
@@ -117,19 +188,15 @@ export default function Home() {
           const text = message.transcript;
           const isFinal = message.transcriptType === 'final';
 
-          setTranscripts((prev) => {
-            // Find if we already have a partial message from this speaker to replace/update
-            const lastMsg = prev[prev.length - 1];
-            if (lastMsg && lastMsg.role === role && !lastMsg.isFinal) {
-              // Update existing partial message
-              const updated = [...prev];
-              updated[updated.length - 1] = { role, text, isFinal };
-              return updated;
-            } else {
-              // Append new message
-              return [...prev, { role, text, isFinal }];
-            }
-          });
+          if (isFinal) {
+            // Commit the finalized sentence permanently into the transcripts list
+            // and clear the partial tracker so the next partial starts fresh
+            setTranscripts((prev) => [...prev, { role, text, isFinal: true }]);
+            setPartialTranscript(null);
+          } else {
+            // Update only the live partial — never mutate the finalized list
+            setPartialTranscript({ role, text, isFinal: false });
+          }
         }
       });
 
@@ -141,39 +208,41 @@ export default function Home() {
       });
     });
 
-    // Initial fetch of registrations (deferred to avoid synchronous state updates in effect)
-    setTimeout(fetchRegistrations, 0);
-
-    // Set up polling to refresh registrations
-    const interval = setInterval(fetchRegistrations, 5000);
     return () => {
-      clearInterval(interval);
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, []); // Empty deps — Vapi SDK must only be initialized ONCE. Use refs for callbacks.
 
-  // Scroll transcript window to bottom on every change to prevent getting stuck
+  // Scroll transcript window to bottom on every change (final or partial) to prevent getting stuck
   useEffect(() => {
     const container = transcriptContainerRef.current;
     if (container) {
       container.scrollTop = container.scrollHeight;
     }
-  }, [transcripts]);
+  }, [transcripts, partialTranscript]);
 
   // Toggle Web Call
   const toggleCall = async () => {
     if (!vapiRef.current) return;
 
-    if (isCallActive) {
+    if (isCallActive && callStatus !== 'ended') {
       vapiRef.current.stop();
     } else {
+      setTranscripts([]);
+      setPartialTranscript(null);
+      setCallDuration(0);
       setCallStatus('connecting');
+      setIsCallActive(true);
       const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || '6cee1a72-ba5c-4239-a8d4-a0cd30b2b547';
       try {
-        await vapiRef.current.start(assistantId);
+        const call = await vapiRef.current.start(assistantId);
+        if (call) {
+          callIdRef.current = call.id;
+        }
       } catch (err) {
         console.error('Failed to start call:', err);
         setCallStatus('idle');
+        setIsCallActive(false);
       }
     }
   };
@@ -241,7 +310,7 @@ export default function Home() {
             <button 
               onClick={() => setIsDrawerOpen(true)} 
               className={styles.drawerTriggerBtn}
-              title="Open Enrolled Student Roster & Course Catalog"
+              title="Open Student Records & Course Catalog"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '6px', verticalAlign: 'middle' }}>
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -249,7 +318,7 @@ export default function Home() {
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
-              View Enrolled Students & Catalog
+              View Records & Catalog
             </button>
           </div>
         </header>
@@ -293,7 +362,7 @@ export default function Home() {
               </div>
               
               <span className={styles.sphereStatusPrompt}>
-                {callStatus === 'connecting' ? 'Connecting to Audio Network...' : 'Tap the sphere to talk in browser'}
+                {callStatus === 'connecting' ? 'Connecting to Audio Network...' : 'Tap the mic to talk in browser'}
               </span>
 
               {/* Dialer form directly below the voice agent Focus Sphere */}
@@ -338,61 +407,127 @@ export default function Home() {
               {/* Left Column: Active Visualizer */}
               <div className={styles.activeVisualizerPanel}>
                 <div className={styles.activeSphereArea}>
-                  <div className={styles.activeAudioRings} style={{ transform: `scale(${1 + volume * 0.7})`, opacity: 0.6 }}></div>
-                  <div className={styles.activeAudioRingsSecondary} style={{ transform: `scale(${1 + volume * 1.3})`, opacity: 0.3 }}></div>
-                  
-                  <button 
-                    onClick={toggleCall}
-                    className={styles.activeSphereButton}
-                    title="End Call"
-                  >
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <rect x="3" y="11" width="18" height="2" rx="1"></rect>
-                    </svg>
-                  </button>
+                  {callStatus !== 'ended' ? (
+                    <>
+                      <div className={styles.activeAudioRings} style={{ transform: `scale(${1 + volume * 0.7})`, opacity: 0.6 }}></div>
+                      <div className={styles.activeAudioRingsSecondary} style={{ transform: `scale(${1 + volume * 1.3})`, opacity: 0.3 }}></div>
+                      
+                      <button 
+                        onClick={toggleCall}
+                        className={styles.activeSphereButton}
+                        title="End Call"
+                      >
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <rect x="3" y="11" width="18" height="2" rx="1"></rect>
+                        </svg>
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      onClick={toggleCall}
+                      className={styles.endedSphereButton}
+                      title="Start New Call"
+                    >
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" y2="22"></line>
+                      </svg>
+                    </button>
+                  )}
                 </div>
 
                 <div className={styles.activeCallMeta}>
-                  <span className={`${styles.activeCallStatus} ${callStatus === 'speaking' ? styles.callSpeakingColor : ''}`}>
-                    {callStatus === 'speaking' ? 'Monica is speaking' : 'Listening to you'}
-                  </span>
+                  {callStatus === 'ended' ? (
+                    <span className={styles.endedCallStatus}>
+                      Call Ended
+                    </span>
+                  ) : (
+                    <span className={`${styles.activeCallStatus} ${callStatus === 'speaking' ? styles.callSpeakingColor : ''}`}>
+                      {callStatus === 'speaking' ? 'Monica is speaking' : 'Listening to you'}
+                    </span>
+                  )}
                   <span className={styles.activeDurationBadge}>
                     • {formatDuration(callDuration)}
                   </span>
                 </div>
 
-                <div className={styles.visualizerWave}>
-                  {[...Array(11)].map((_, i) => {
-                    const factor = 1 - Math.abs(i - 5) * 0.16;
-                    const height = Math.max(6, volume * 120 * factor);
-                    return (
-                      <div 
-                        key={i} 
-                        className={styles.waveBar} 
-                        style={{ height: `${height}px` }}
-                      ></div>
-                    );
-                  })}
-                </div>
+                {callStatus !== 'ended' ? (
+                  <div className={styles.visualizerWave}>
+                    {[...Array(11)].map((_, i) => {
+                      const factor = 1 - Math.abs(i - 5) * 0.16;
+                      const height = Math.max(6, volume * 120 * factor);
+                      return (
+                        <div 
+                          key={i} 
+                          className={styles.waveBar} 
+                          style={{ height: `${height}px` }}
+                        ></div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column', width: '100%', alignItems: 'center' }}>
+                    <button
+                      onClick={() => setIsDrawerOpen(true)}
+                      className={styles.viewLogsBtn}
+                      title="Open Records & Call History"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '6px', verticalAlign: 'middle' }}>
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                      </svg>
+                      View Call History
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsCallActive(false);
+                        setCallStatus('idle');
+                        setTranscripts([]);
+                        setPartialTranscript(null);
+                      }}
+                      className={styles.backHomeBtn}
+                      title="Go Back to Home Screen"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '6px', verticalAlign: 'middle' }}>
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                      </svg>
+                      Go Back to Home
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Right Column: Large High-Readability Transcripts */}
               <div className={styles.activeSubtitlePanel}>
                 <div className={styles.subtitleTitle}>Conversation Subtitles</div>
                 <div ref={transcriptContainerRef} className={styles.subtitleScrollBox}>
-                  {transcripts.length === 0 ? (
+                  {transcripts.length === 0 && !partialTranscript ? (
                     <div className={styles.subtitleEmpty}>
-                      Monica is greeting you. Start speaking when you are ready...
+                      Connected — Monica will speak shortly. Start talking whenever you&apos;re ready.
                     </div>
                   ) : (
-                    transcripts.map((msg, index) => (
-                      <div key={index} className={msg.role === 'Monica' ? styles.subAgent : styles.subUser}>
-                        <span className={msg.role === 'Monica' ? styles.subRoleAgent : styles.subRoleUser}>
-                          {msg.role === 'Monica' ? 'Monica' : 'You'}
-                        </span>
-                        <p className={styles.subText}>{msg.text}</p>
-                      </div>
-                    ))
+                    <>
+                      {transcripts.map((msg, index) => (
+                        <div key={index} className={msg.role === 'Monica' ? styles.subAgent : styles.subUser}>
+                          <span className={msg.role === 'Monica' ? styles.subRoleAgent : styles.subRoleUser}>
+                            {msg.role === 'Monica' ? 'Monica' : 'You'}
+                          </span>
+                          <p className={styles.subText}>{msg.text}</p>
+                        </div>
+                      ))}
+                      {/* Live partial transcript streamed in real-time */}
+                      {partialTranscript && (
+                        <div className={partialTranscript.role === 'Monica' ? styles.subAgent : styles.subUser}>
+                          <span className={partialTranscript.role === 'Monica' ? styles.subRoleAgent : styles.subRoleUser}>
+                            {partialTranscript.role === 'Monica' ? 'Monica' : 'You'}
+                          </span>
+                          <p className={`${styles.subText} ${styles.subTextPartial}`}>{partialTranscript.text}</p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -416,7 +551,7 @@ export default function Home() {
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
-              Academy Catalog & Enrolled Student Roster
+              Academy Catalog & Student Records
             </div>
             
             <div className={styles.drawerHeaderActions}>
@@ -529,7 +664,7 @@ export default function Home() {
                     <div>
                       <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', marginBottom: '0.15rem' }}>State-Synchronized Database</h3>
                       <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.4 }}>
-                        Reservations are stored in a Vercel KV database and instantly rendered in the live log roster on the right panel.
+                         Reservations are stored in a Vercel KV database and instantly rendered in the live log records on the right panel.
                       </p>
                     </div>
                   </div>
@@ -570,6 +705,7 @@ export default function Home() {
                           <th>Course</th>
                           <th>Slot</th>
                           <th>Channel</th>
+                          <th>Transcript</th>
                           <th>Enrolled At</th>
                         </tr>
                       </thead>
@@ -586,6 +722,19 @@ export default function Home() {
                                 {reg.source === 'webCall' ? 'Web sdk' : 'Phone'}
                               </span>
                             </td>
+                            <td>
+                              {(reg.transcript || (reg.transcripts && reg.transcripts.length > 0)) ? (
+                                <button
+                                  onClick={() => setSelectedRegForTranscript(reg)}
+                                  className={styles.viewTranscriptBtn}
+                                  title="View Full Call Subtitles"
+                                >
+                                  View Transcript
+                                </button>
+                              ) : (
+                                <span style={{ color: '#4b5563', fontStyle: 'italic', fontSize: '0.8rem' }}>No audio</span>
+                              )}
+                            </td>
                             <td style={{ fontSize: '0.8rem', color: '#6b7280' }}>
                               {new Date(reg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </td>
@@ -600,6 +749,74 @@ export default function Home() {
 
           </div>
         </div>
+
+        {/* Conversation Transcript Modal Overlay */}
+        {selectedRegForTranscript && (
+          <div className={styles.modalBackdrop} onClick={() => setSelectedRegForTranscript(null)}>
+            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <div>
+                  <h3>Conversation with {selectedRegForTranscript.name}</h3>
+                  <p className={styles.modalSubHeader}>
+                    Duration: {formatDuration(selectedRegForTranscript.duration || 0)} • {new Date(selectedRegForTranscript.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <button className={styles.modalCloseBtn} onClick={() => setSelectedRegForTranscript(null)} title="Close Modal">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <div className={styles.modalBody}>
+                {selectedRegForTranscript.summary && (
+                  <div className={styles.modalSummaryBox}>
+                    <strong>Call Summary</strong>
+                    <p>{selectedRegForTranscript.summary}</p>
+                  </div>
+                )}
+
+                <div className={styles.modalTranscriptBox}>
+                  <strong>Transcript Log</strong>
+                  <div className={styles.modalTranscriptList}>
+                    {/* Handle string format from webhook report */}
+                    {typeof selectedRegForTranscript.transcript === 'string' && selectedRegForTranscript.transcript ? (
+                      selectedRegForTranscript.transcript.split('\n').map((line, idx) => {
+                        if (!line.trim()) return null;
+                        const isAgent = line.trim().startsWith('Monica:') || line.trim().startsWith('Assistant:') || line.trim().startsWith('Monica (Assistant):');
+                        const speakerName = isAgent ? 'Monica' : 'You/Customer';
+                        const text = line.replace(/^(Monica|Assistant|User|Customer|Monica \(Assistant\)):\s*/i, '');
+                        return (
+                          <div key={idx} className={isAgent ? styles.modalLineAgent : styles.modalLineUser}>
+                            <span className={isAgent ? styles.modalRoleAgent : styles.modalRoleUser}>
+                              {speakerName}
+                            </span>
+                            <p className={styles.modalLineText}>{text}</p>
+                          </div>
+                        );
+                      })
+                    ) : selectedRegForTranscript.transcripts && selectedRegForTranscript.transcripts.length > 0 ? (
+                      /* Handle array format from browser post */
+                      selectedRegForTranscript.transcripts.map((msg, idx) => (
+                        <div key={idx} className={msg.role === 'Monica' ? styles.modalLineAgent : styles.modalLineUser}>
+                          <span className={msg.role === 'Monica' ? styles.modalRoleAgent : styles.modalRoleUser}>
+                            {msg.role === 'Monica' ? 'Monica' : 'You'}
+                          </span>
+                          <p className={styles.modalLineText}>{msg.text}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ color: '#6b7280', fontStyle: 'italic', textAlign: 'center', padding: '1rem 0' }}>
+                        No transcripts recorded for this session.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
